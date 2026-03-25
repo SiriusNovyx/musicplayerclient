@@ -882,56 +882,6 @@ syncShadow()
 UI.main:GetPropertyChangedSignal("Position"):Connect(syncShadow)
 UI.main:GetPropertyChangedSignal("Size"):Connect(syncShadow)
 
--- ── Mobile toggle button ──────────────────────────────────────────────────
--- A persistent "☰ / ✕" button anchored to the top-right of the screen so
--- the player can always show or hide the controller on touch devices.
-do
-	local mobileToggleGui = Instance.new("ScreenGui")
-	mobileToggleGui.Name = "MCMobileToggleGui"
-	mobileToggleGui.ResetOnSpawn = false
-	mobileToggleGui.IgnoreGuiInset = true
-	mobileToggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
-	mobileToggleGui.DisplayOrder = 999
-	mobileToggleGui.Parent = pGui
-
-	local toggleBtn = Instance.new("TextButton")
-	toggleBtn.Name = "MobileToggleBtn"
-	toggleBtn.AnchorPoint = Vector2.new(1, 0)
-	toggleBtn.Position = UDim2.new(1, -10, 0, 10)
-	toggleBtn.Size = UDim2.new(0, 44, 0, 44)
-	toggleBtn.BackgroundColor3 = C.ELEVATED
-	toggleBtn.AutoButtonColor = false
-	toggleBtn.Font = Enum.Font.GothamBold
-	toggleBtn.Text = "♪"
-	toggleBtn.TextColor3 = C.ACCENT
-	toggleBtn.TextSize = 20
-	toggleBtn.BorderSizePixel = 0
-	toggleBtn.ZIndex = 10
-	toggleBtn.Parent = mobileToggleGui
-	applyCornerRadius(12, toggleBtn)
-	applyStroke(1, C.BORDER_LIT, 0.3, toggleBtn)
-
-	local function updateToggleIcon()
-		toggleBtn.Text = St.guiOpen and "✕" or "♪"
-		toggleBtn.TextColor3 = St.guiOpen and C.TEXT2 or C.ACCENT
-	end
-	updateToggleIcon()
-
-	toggleBtn.MouseButton1Click:Connect(function()
-		if St.guiOpen then
-			hideController()
-		else
-			showController()
-		end
-		task.delay(0.05, updateToggleIcon)
-	end)
-
-	-- Keep icon in sync after programmatic show/hide
-	Svc.RunService.Heartbeat:Connect(function()
-		local expected = St.guiOpen and "✕" or "♪"
-		if toggleBtn.Text ~= expected then updateToggleIcon() end
-	end)
-end
 do
 	local lg=Instance.new("ScreenGui")
 lg.Name="MusicLyricsGui"
@@ -5236,6 +5186,58 @@ St.guiOpen=false
 	end)
 tw:Play()
 end
+
+-- ── Mobile toggle button ──────────────────────────────────────────────────
+-- Defined here (after showController/hideController) so the button's click
+-- handler can actually call them.  A persistent ♪ / ✕ button sits in the
+-- top-right corner so mobile players can always show or hide the controller.
+do
+	local mobileToggleGui = Instance.new("ScreenGui")
+	mobileToggleGui.Name = "MCMobileToggleGui"
+	mobileToggleGui.ResetOnSpawn = false
+	mobileToggleGui.IgnoreGuiInset = true
+	mobileToggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+	mobileToggleGui.DisplayOrder = 999
+	mobileToggleGui.Parent = pGui
+
+	local toggleBtn = Instance.new("TextButton")
+	toggleBtn.Name = "MobileToggleBtn"
+	toggleBtn.AnchorPoint = Vector2.new(1, 0)
+	toggleBtn.Position = UDim2.new(1, -10, 0, 10)
+	toggleBtn.Size = UDim2.new(0, 44, 0, 44)
+	toggleBtn.BackgroundColor3 = C.ELEVATED
+	toggleBtn.AutoButtonColor = false
+	toggleBtn.Font = Enum.Font.GothamBold
+	toggleBtn.Text = "[M]"
+	toggleBtn.TextColor3 = C.ACCENT
+	toggleBtn.TextSize = 20
+	toggleBtn.BorderSizePixel = 0
+	toggleBtn.ZIndex = 10
+	toggleBtn.Parent = mobileToggleGui
+	applyCornerRadius(12, toggleBtn)
+	applyStroke(1, C.BORDER_LIT, 0.3, toggleBtn)
+
+	local function updateToggleIcon()
+		toggleBtn.Text = St.guiOpen and "[X]" or "[M]"
+		toggleBtn.TextColor3 = St.guiOpen and C.TEXT2 or C.ACCENT
+	end
+	updateToggleIcon()
+
+	toggleBtn.MouseButton1Click:Connect(function()
+		if St.guiOpen then
+			hideController()
+		else
+			showController()
+		end
+		task.delay(0.05, updateToggleIcon)
+	end)
+
+	Svc.RunService.Heartbeat:Connect(function()
+		local expected = St.guiOpen and "[X]" or "[M]"
+		if toggleBtn.Text ~= expected then updateToggleIcon() end
+	end)
+end
+
 Svc.UserInput.InputBegan:Connect(function(inp,gp)
 	if inp.UserInputType~=Enum.UserInputType.Keyboard then return end
 	-- NOTE: keybind *capture* is handled by the separate kbCapturing handler above.
